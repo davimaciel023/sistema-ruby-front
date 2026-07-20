@@ -1,0 +1,276 @@
+<div class="mx-auto max-w-5xl space-y-6">
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold">Tarefas</h1>
+      <p class="text-sm text-slate-400">Cada um cuida das suas — mas todos podem comentar</p>
+    </div>
+    <button
+      type="button"
+      class="flex items-center gap-2 rounded-xl bg-gradient-to-r from-ruby-700 to-ruby-500 px-5 py-2.5 text-sm font-semibold text-white shadow-[0_0_20px_rgba(230,57,80,0.35)] transition-all duration-200 hover:from-ruby-600 hover:to-ruby-400 active:scale-95"
+      (click)="vm.openForm()"
+    >
+      <app-icon name="plus" cssClass="w-4 h-4" />
+      Nova tarefa
+    </button>
+  </div>
+
+  <div class="flex flex-wrap gap-2">
+    <button
+      type="button"
+      class="rounded-full border px-4 py-1.5 text-sm font-medium transition-all duration-200"
+      [class]="
+        vm.selectedMemberId() === null
+          ? 'border-ruby-500/50 bg-ruby-700/25 text-ruby-300'
+          : 'border-white/10 text-slate-400 hover:border-white/25 hover:text-white'
+      "
+      (click)="vm.selectMember(null)"
+    >
+      Todos
+    </button>
+    @for (member of vm.members(); track member.id) {
+      <button
+        type="button"
+        class="flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-medium transition-all duration-200"
+        [class]="
+          vm.selectedMemberId() === member.id
+            ? 'border-ruby-500/50 bg-ruby-700/25 text-ruby-300'
+            : 'border-white/10 text-slate-400 hover:border-white/25 hover:text-white'
+        "
+        (click)="vm.selectMember(member.id)"
+      >
+        <span
+          class="inline-block h-2.5 w-2.5 rounded-full"
+          [style.background-color]="member.avatar_color"
+        ></span>
+        {{ member.name.split(' ')[0] }}
+      </button>
+    }
+  </div>
+
+  @if (vm.showForm()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" (click)="vm.closeForm()">
+      <div
+        class="w-full max-w-lg rounded-2xl border border-white/10 bg-surface p-6 shadow-[0_8px_32px_rgba(0,0,0,0.6)]"
+        (click)="$event.stopPropagation()"
+      >
+        <div class="mb-5 flex items-center justify-between">
+          <h2 class="text-lg font-semibold">Nova tarefa</h2>
+          <button type="button" class="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-white/10 hover:text-white" (click)="vm.closeForm()">
+            <app-icon name="close" cssClass="w-5 h-5" />
+          </button>
+        </div>
+        <form class="space-y-4" (ngSubmit)="vm.submitForm()">
+          <input
+            type="text"
+            name="title"
+            placeholder="Título da tarefa"
+            class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-slate-500 transition-all duration-200 focus:border-ruby-500/60 focus:outline-none"
+            [ngModel]="vm.formTitle()"
+            (ngModelChange)="vm.formTitle.set($event)"
+          />
+          <textarea
+            name="description"
+            rows="2"
+            placeholder="Descrição (opcional)"
+            class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-slate-500 transition-all duration-200 focus:border-ruby-500/60 focus:outline-none"
+            [ngModel]="vm.formDescription()"
+            (ngModelChange)="vm.formDescription.set($event)"
+          ></textarea>
+          <div class="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label class="mb-1 block text-xs font-medium text-slate-400">Responsável</label>
+              <select
+                name="assignee"
+                class="w-full rounded-xl border border-white/10 bg-surface px-4 py-3 text-white transition-all duration-200 focus:border-ruby-500/60 focus:outline-none"
+                [ngModel]="vm.formAssigneeId()"
+                (ngModelChange)="vm.formAssigneeId.set($event)"
+              >
+                @for (member of vm.members(); track member.id) {
+                  <option [ngValue]="member.id">{{ member.name }}</option>
+                }
+              </select>
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-medium text-slate-400">Prazo</label>
+              <input
+                type="datetime-local"
+                name="dueAt"
+                class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white transition-all duration-200 focus:border-ruby-500/60 focus:outline-none"
+                [ngModel]="vm.formDueAt()"
+                (ngModelChange)="vm.formDueAt.set($event)"
+              />
+            </div>
+          </div>
+          <div>
+            <label class="mb-1 block text-xs font-medium text-slate-400">Prioridade</label>
+            <div class="flex gap-2">
+              @for (priority of ['low', 'medium', 'high']; track priority) {
+                <button
+                  type="button"
+                  class="flex-1 rounded-xl border px-3 py-2 text-sm font-medium transition-all duration-200"
+                  [class]="
+                    vm.formPriority() === priority
+                      ? 'border-ruby-500/50 bg-ruby-700/25 text-ruby-300'
+                      : 'border-white/10 text-slate-400 hover:border-white/25'
+                  "
+                  (click)="vm.formPriority.set($any(priority))"
+                >
+                  {{ priority === 'low' ? 'Baixa' : priority === 'medium' ? 'Média' : 'Alta' }}
+                </button>
+              }
+            </div>
+          </div>
+          <button
+            type="submit"
+            class="w-full rounded-xl bg-gradient-to-r from-ruby-700 to-ruby-500 px-6 py-3 font-semibold text-white transition-all duration-200 hover:from-ruby-600 hover:to-ruby-400 active:scale-95"
+          >
+            Criar tarefa
+          </button>
+        </form>
+      </div>
+    </div>
+  }
+
+  @if (vm.isLoading()) {
+    <div class="rounded-2xl border border-white/10 bg-white/5 p-10 text-center text-slate-400">Carregando…</div>
+  } @else {
+    <section class="space-y-3">
+      @if (vm.pendingTasks().length === 0) {
+        <div class="rounded-2xl border border-white/10 bg-white/5 p-10 text-center text-slate-500">
+          Nenhuma tarefa pendente.
+        </div>
+      }
+      @for (task of vm.pendingTasks(); track task.id) {
+        <article
+          class="rounded-2xl border bg-white/5 backdrop-blur-xl transition-all duration-200"
+          [class]="vm.isOverdue(task) ? 'border-ruby-500/50' : 'border-white/10 hover:border-white/20'"
+        >
+          <div class="flex items-start gap-3 p-5">
+            @if (vm.canEdit(task)) {
+              <button
+                type="button"
+                class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border-2 border-slate-500 text-transparent transition-all duration-200 hover:border-ruby-400 hover:text-ruby-400"
+                (click)="vm.setStatus(task, 'done')"
+                title="Concluir"
+              >
+                <app-icon name="check" cssClass="w-4 h-4" />
+              </button>
+            } @else {
+              <span
+                class="mt-1.5 inline-block h-3 w-3 shrink-0 rounded-full"
+                [style.background-color]="task.assignee.avatar_color"
+              ></span>
+            }
+            <div class="min-w-0 flex-1">
+              <div class="flex flex-wrap items-center gap-2">
+                <p class="font-medium">{{ task.title }}</p>
+                @if (vm.isOverdue(task)) {
+                  <span class="rounded-full bg-ruby-700/30 px-2.5 py-0.5 text-[11px] font-semibold text-ruby-300">Atrasada</span>
+                }
+                <span
+                  class="rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
+                  [class]="
+                    task.priority === 'high'
+                      ? 'bg-ruby-700/30 text-ruby-300'
+                      : task.priority === 'medium'
+                        ? 'bg-amber-500/15 text-amber-300'
+                        : 'bg-white/10 text-slate-300'
+                  "
+                >
+                  {{ task.priority === 'high' ? 'Alta' : task.priority === 'medium' ? 'Média' : 'Baixa' }}
+                </span>
+              </div>
+              @if (task.description) {
+                <p class="mt-1 text-sm text-slate-400">{{ task.description }}</p>
+              }
+              <p class="mt-1 text-xs text-slate-500">
+                {{ task.assignee.name }} · vence {{ task.due_at | date: 'dd/MM/yyyy HH:mm' }}
+              </p>
+            </div>
+            <div class="flex shrink-0 items-center gap-1">
+              <button
+                type="button"
+                class="flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
+                (click)="vm.toggleExpand(task.id)"
+              >
+                <app-icon name="comment" cssClass="w-4 h-4" />
+                {{ task.comments.length }}
+              </button>
+              @if (vm.canEdit(task)) {
+                <button
+                  type="button"
+                  class="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-ruby-700/25 hover:text-ruby-300"
+                  (click)="vm.deleteTask(task)"
+                  title="Excluir"
+                >
+                  <app-icon name="trash" cssClass="w-4 h-4" />
+                </button>
+              }
+            </div>
+          </div>
+          @if (vm.expandedTaskId() === task.id) {
+            <div class="border-t border-white/8 px-5 py-4">
+              @for (comment of task.comments; track comment.id) {
+                <div class="mb-3 flex gap-3">
+                  <div
+                    class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
+                    [style.background-color]="comment.author.avatar_color"
+                  >
+                    {{ comment.author.name.charAt(0) }}
+                  </div>
+                  <div class="min-w-0">
+                    <p class="text-xs text-slate-400">
+                      <span class="font-semibold text-slate-300">{{ comment.author.name }}</span>
+                      · {{ comment.created_at | date: 'dd/MM HH:mm' }}
+                    </p>
+                    <p class="text-sm">{{ comment.text }}</p>
+                  </div>
+                </div>
+              }
+              <form class="flex gap-2" (ngSubmit)="vm.submitComment(task)">
+                <input
+                  type="text"
+                  name="comment"
+                  placeholder="Escreva um comentário…"
+                  class="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-slate-500 transition-all duration-200 focus:border-ruby-500/60 focus:outline-none"
+                  [ngModel]="vm.commentDraft()"
+                  (ngModelChange)="vm.commentDraft.set($event)"
+                />
+                <button
+                  type="submit"
+                  class="rounded-xl bg-ruby-700 px-4 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:bg-ruby-600 active:scale-95"
+                >
+                  Enviar
+                </button>
+              </form>
+            </div>
+          }
+        </article>
+      }
+    </section>
+
+    @if (vm.doneTasks().length > 0) {
+      <section>
+        <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">Concluídas</h2>
+        <div class="space-y-2">
+          @for (task of vm.doneTasks(); track task.id) {
+            <div class="flex items-center gap-3 rounded-xl border border-white/5 bg-white/[0.03] px-5 py-3 opacity-70">
+              <app-icon name="check" cssClass="w-4 h-4 text-emerald-400 shrink-0" />
+              <p class="min-w-0 flex-1 truncate text-sm text-slate-400 line-through">{{ task.title }}</p>
+              <p class="shrink-0 text-xs text-slate-500">{{ task.assignee.name.split(' ')[0] }}</p>
+              @if (vm.canEdit(task)) {
+                <button
+                  type="button"
+                  class="shrink-0 text-xs text-slate-500 transition-colors hover:text-white"
+                  (click)="vm.setStatus(task, 'todo')"
+                >
+                  reabrir
+                </button>
+              }
+            </div>
+          }
+        </div>
+      </section>
+    }
+  }
+</div>

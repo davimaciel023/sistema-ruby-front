@@ -1,0 +1,9 @@
+services:
+  forro-ruby-front:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: forro-ruby-front
+    restart: unless-stopped
+    ports:
+      - "8080:80"

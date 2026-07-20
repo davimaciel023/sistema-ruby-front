@@ -1,0 +1,189 @@
+<div class="mx-auto max-w-5xl space-y-6">
+  <div>
+    <h1 class="text-2xl font-bold">Registro de ponto</h1>
+    <p class="text-sm text-slate-400">Tempo de trabalho e estudo — meta diária de 1h30</p>
+  </div>
+
+  <div class="grid gap-6 lg:grid-cols-2">
+    <section class="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-xl">
+      @if (vm.openSession(); as session) {
+        <div class="space-y-4 text-center">
+          <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/15">
+            <app-icon name="clock" cssClass="w-8 h-8 text-emerald-400" />
+          </div>
+          <div>
+            <p class="font-semibold text-emerald-300">Sessão em andamento</p>
+            <p class="text-sm text-slate-400">
+              {{ session.category === 'work' ? 'Trabalho' : 'Estudo' }}
+              · entrada {{ session.check_in | date: 'HH:mm' }}
+            </p>
+          </div>
+          <button
+            type="button"
+            class="mx-auto flex items-center gap-2 rounded-xl bg-ruby-700 px-8 py-3 font-semibold text-white shadow-[0_0_20px_rgba(230,57,80,0.35)] transition-all duration-200 hover:bg-ruby-600 active:scale-95"
+            (click)="vm.checkOut()"
+          >
+            <app-icon name="stop" cssClass="w-5 h-5" />
+            Registrar saída
+          </button>
+        </div>
+      } @else {
+        <div class="space-y-4">
+          <p class="font-semibold">Iniciar sessão</p>
+          <div class="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              class="rounded-xl border px-3 py-2.5 text-sm font-medium transition-all duration-200"
+              [class]="
+                vm.checkInCategory() === 'work'
+                  ? 'border-ruby-500/50 bg-ruby-700/25 text-ruby-300'
+                  : 'border-white/10 text-slate-400 hover:border-white/25'
+              "
+              (click)="vm.checkInCategory.set('work')"
+            >
+              Trabalho
+            </button>
+            <button
+              type="button"
+              class="rounded-xl border px-3 py-2.5 text-sm font-medium transition-all duration-200"
+              [class]="
+                vm.checkInCategory() === 'study'
+                  ? 'border-ruby-500/50 bg-ruby-700/25 text-ruby-300'
+                  : 'border-white/10 text-slate-400 hover:border-white/25'
+              "
+              (click)="vm.checkInCategory.set('study')"
+            >
+              Estudo
+            </button>
+          </div>
+          <input
+            type="text"
+            name="description"
+            placeholder="No que vai trabalhar? (opcional)"
+            class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-slate-500 transition-all duration-200 focus:border-ruby-500/60 focus:outline-none"
+            [ngModel]="vm.checkInDescription()"
+            (ngModelChange)="vm.checkInDescription.set($event)"
+          />
+          <button
+            type="button"
+            class="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-ruby-700 to-ruby-500 px-6 py-3 font-semibold text-white shadow-[0_0_20px_rgba(230,57,80,0.35)] transition-all duration-200 hover:from-ruby-600 hover:to-ruby-400 active:scale-95"
+            (click)="vm.checkIn()"
+          >
+            <app-icon name="play" cssClass="w-5 h-5" />
+            Registrar entrada
+          </button>
+        </div>
+      }
+    </section>
+
+    <section class="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-xl">
+      <p class="font-semibold">Minha meta de hoje</p>
+      <p class="mt-1 text-sm text-slate-400">
+        {{ vm.formatMinutes(vm.myTodayMinutes()) }} de {{ vm.formatMinutes(vm.goalMinutes) }}
+      </p>
+      <div class="mt-4 h-3 overflow-hidden rounded-full bg-white/10">
+        <div
+          class="h-full rounded-full transition-all duration-500"
+          [class]="vm.goalProgress() >= 100 ? 'bg-emerald-500' : 'bg-gradient-to-r from-ruby-700 to-ruby-500'"
+          [style.width.%]="vm.goalProgress()"
+        ></div>
+      </div>
+      @if (vm.goalProgress() >= 100) {
+        <p class="mt-3 text-sm font-medium text-emerald-400">Meta do dia batida!</p>
+      } @else {
+        <p class="mt-3 text-sm text-slate-500">
+          Faltam {{ vm.formatMinutes(vm.goalMinutes - vm.myTodayMinutes()) }} para a meta
+        </p>
+      }
+    </section>
+  </div>
+
+  <section class="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
+    <h2 class="mb-4 font-semibold">Últimos 7 dias da banda</h2>
+    <div class="grid gap-6 sm:grid-cols-3">
+      @for (memberReport of vm.report(); track memberReport.member.id) {
+        <div>
+          <div class="mb-2 flex items-center gap-2">
+            <div
+              class="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white"
+              [style.background-color]="memberReport.member.avatar_color"
+            >
+              {{ memberReport.member.name.charAt(0) }}
+            </div>
+            <div>
+              <p class="text-sm font-semibold">{{ memberReport.member.name.split(' ')[0] }}</p>
+              <p class="text-xs text-slate-400">{{ vm.formatMinutes(memberReport.total_minutes) }} na semana</p>
+            </div>
+          </div>
+          <div class="flex gap-1">
+            @for (day of memberReport.days; track day.date) {
+              <div
+                class="h-8 flex-1 rounded"
+                [class]="
+                  day.goal_met
+                    ? 'bg-emerald-500/70'
+                    : day.total_minutes > 0
+                      ? 'bg-amber-500/50'
+                      : 'bg-white/8'
+                "
+                [title]="day.date + ': ' + vm.formatMinutes(day.total_minutes)"
+              ></div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </section>
+
+  @if (!vm.isLoading()) {
+    <section class="overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl">
+      <h2 class="border-b border-white/8 px-6 py-4 font-semibold">Histórico de sessões</h2>
+      @if (vm.logs().length === 0) {
+        <p class="p-10 text-center text-slate-500">Nenhuma sessão registrada ainda.</p>
+      } @else {
+        <ul class="divide-y divide-white/8">
+          @for (log of vm.logs(); track log.id) {
+            <li class="flex items-center gap-4 px-6 py-3.5">
+              <span
+                class="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
+                [style.background-color]="log.member.avatar_color"
+              ></span>
+              <div class="min-w-0 flex-1">
+                <p class="text-sm font-medium">
+                  {{ log.member.name.split(' ')[0] }}
+                  <span class="font-normal text-slate-400">
+                    · {{ log.category === 'work' ? 'trabalho' : 'estudo' }}
+                    @if (log.description) { · {{ log.description }} }
+                  </span>
+                </p>
+                <p class="text-xs text-slate-500">
+                  {{ log.date | date: 'dd/MM' }} · {{ log.check_in | date: 'HH:mm' }}
+                  @if (log.check_out) { → {{ log.check_out | date: 'HH:mm' }} }
+                </p>
+              </div>
+              @if (log.duration_minutes !== null) {
+                <span class="shrink-0 text-sm font-semibold text-slate-300">
+                  {{ vm.formatMinutes(log.duration_minutes) }}
+                </span>
+              } @else {
+                <span class="shrink-0 rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-300">
+                  em andamento
+                </span>
+              }
+              @if (log.member.id === vm.currentMemberId()) {
+                <button
+                  type="button"
+                  class="shrink-0 rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-ruby-700/25 hover:text-ruby-300"
+                  (click)="vm.deleteLog(log)"
+                  title="Excluir"
+                >
+                  <app-icon name="trash" cssClass="w-4 h-4" />
+                </button>
+              }
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  }
+</div>

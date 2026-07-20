@@ -1,0 +1,481 @@
+<div class="mx-auto max-w-5xl space-y-6">
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold">Agenda</h1>
+      <p class="text-sm text-slate-400">Shows, ensaios, lembretes e atividades fixas</p>
+    </div>
+    <button
+      type="button"
+      class="flex items-center gap-2 rounded-xl bg-gradient-to-r from-ruby-700 to-ruby-500 px-5 py-2.5 text-sm font-semibold text-white shadow-[0_0_20px_rgba(230,57,80,0.35)] transition-all duration-200 hover:from-ruby-600 hover:to-ruby-400 active:scale-95"
+      (click)="vm.openForm()"
+    >
+      <app-icon name="plus" cssClass="w-4 h-4" />
+      Novo evento
+    </button>
+  </div>
+
+  <div class="flex flex-wrap gap-2">
+    @for (
+      option of [
+        { value: null, label: 'Todos' },
+        { value: 'show', label: 'Shows' },
+        { value: 'rehearsal', label: 'Ensaios' },
+        { value: 'reminder', label: 'Lembretes' },
+        { value: 'fixed', label: 'Fixas' }
+      ];
+      track option.label
+    ) {
+      <button
+        type="button"
+        class="rounded-full border px-4 py-1.5 text-sm font-medium transition-all duration-200"
+        [class]="
+          vm.typeFilter() === option.value
+            ? 'border-ruby-500/50 bg-ruby-700/25 text-ruby-300'
+            : 'border-white/10 text-slate-400 hover:border-white/25 hover:text-white'
+        "
+        (click)="vm.setFilter($any(option.value))"
+      >
+        {{ option.label }}
+      </button>
+    }
+  </div>
+
+  @if (vm.showForm()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" (click)="vm.closeForm()">
+      <div
+        class="max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-2xl border border-white/10 bg-surface p-6 shadow-[0_8px_32px_rgba(0,0,0,0.6)]"
+        (click)="$event.stopPropagation()"
+      >
+        <div class="mb-5 flex items-center justify-between">
+          <h2 class="text-lg font-semibold">Novo evento</h2>
+          <button type="button" class="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-white/10 hover:text-white" (click)="vm.closeForm()">
+            <app-icon name="close" cssClass="w-5 h-5" />
+          </button>
+        </div>
+        <form class="space-y-4" (ngSubmit)="vm.submitForm()">
+          <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            @for (
+              option of [
+                { value: 'show', label: 'Show' },
+                { value: 'rehearsal', label: 'Ensaio' },
+                { value: 'reminder', label: 'Lembrete' },
+                { value: 'fixed', label: 'Fixa' }
+              ];
+              track option.value
+            ) {
+              <button
+                type="button"
+                class="rounded-xl border px-3 py-2 text-sm font-medium transition-all duration-200"
+                [class]="
+                  vm.formType() === option.value
+                    ? 'border-ruby-500/50 bg-ruby-700/25 text-ruby-300'
+                    : 'border-white/10 text-slate-400 hover:border-white/25'
+                "
+                (click)="vm.formType.set($any(option.value))"
+              >
+                {{ option.label }}
+              </button>
+            }
+          </div>
+          <input
+            type="text"
+            name="title"
+            placeholder="Título"
+            class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-slate-500 transition-all duration-200 focus:border-ruby-500/60 focus:outline-none"
+            [ngModel]="vm.formTitle()"
+            (ngModelChange)="vm.formTitle.set($event)"
+          />
+          <div class="grid gap-4 sm:grid-cols-3">
+            <div>
+              <label class="mb-1 block text-xs font-medium text-slate-400">Data</label>
+              <input
+                type="date"
+                name="date"
+                class="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-3 text-white transition-all duration-200 focus:border-ruby-500/60 focus:outline-none"
+                [ngModel]="vm.formDate()"
+                (ngModelChange)="vm.formDate.set($event)"
+              />
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-medium text-slate-400">Início</label>
+              <input
+                type="time"
+                name="startTime"
+                class="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-3 text-white transition-all duration-200 focus:border-ruby-500/60 focus:outline-none"
+                [ngModel]="vm.formStartTime()"
+                (ngModelChange)="vm.formStartTime.set($event)"
+              />
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-medium text-slate-400">Fim</label>
+              <input
+                type="time"
+                name="endTime"
+                class="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-3 text-white transition-all duration-200 focus:border-ruby-500/60 focus:outline-none"
+                [ngModel]="vm.formEndTime()"
+                (ngModelChange)="vm.formEndTime.set($event)"
+              />
+            </div>
+          </div>
+          <input
+            type="text"
+            name="location"
+            placeholder="Local"
+            class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-slate-500 transition-all duration-200 focus:border-ruby-500/60 focus:outline-none"
+            [ngModel]="vm.formLocation()"
+            (ngModelChange)="vm.formLocation.set($event)"
+          />
+          @if (vm.formType() === 'fixed') {
+            <div>
+              <label class="mb-1 block text-xs font-medium text-slate-400">Repetição</label>
+              <select
+                name="recurrence"
+                class="w-full rounded-xl border border-white/10 bg-surface px-4 py-3 text-white transition-all duration-200 focus:border-ruby-500/60 focus:outline-none"
+                [ngModel]="vm.formRecurrence()"
+                (ngModelChange)="vm.formRecurrence.set($event)"
+              >
+                <option value="weekly">Toda semana</option>
+                <option value="biweekly">A cada 15 dias</option>
+                <option value="monthly">Todo mês</option>
+              </select>
+            </div>
+          }
+          @if (vm.formType() === 'show') {
+            <div class="space-y-4 rounded-xl border border-ruby-500/25 bg-ruby-700/10 p-4">
+              <p class="text-xs font-semibold uppercase tracking-wide text-ruby-300">Dados do show</p>
+              <input
+                type="text"
+                name="contractor"
+                placeholder="Contratante"
+                class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-slate-500 transition-all duration-200 focus:border-ruby-500/60 focus:outline-none"
+                [ngModel]="vm.formContractor()"
+                (ngModelChange)="vm.formContractor.set($event)"
+              />
+              <div class="grid gap-4 sm:grid-cols-2">
+                <input
+                  type="text"
+                  name="contact"
+                  placeholder="Contato"
+                  class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-slate-500 transition-all duration-200 focus:border-ruby-500/60 focus:outline-none"
+                  [ngModel]="vm.formContact()"
+                  (ngModelChange)="vm.formContact.set($event)"
+                />
+                <input
+                  type="number"
+                  name="fee"
+                  placeholder="Cachê (R$)"
+                  class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-slate-500 transition-all duration-200 focus:border-ruby-500/60 focus:outline-none"
+                  [ngModel]="vm.formFee()"
+                  (ngModelChange)="vm.formFee.set($event)"
+                />
+              </div>
+
+              <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                  <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Divisão entre a banda</p>
+                  <button
+                    type="button"
+                    class="rounded-full border border-white/15 px-3 py-1 text-[11px] font-semibold text-slate-300 transition-all duration-200 hover:border-ruby-500/50 hover:text-ruby-300"
+                    (click)="vm.splitFeeEqually()"
+                  >
+                    Dividir igualmente
+                  </button>
+                </div>
+                @for (row of vm.formPayouts(); track row.memberId) {
+                  <div class="flex items-center gap-3 rounded-xl bg-white/5 px-3 py-2">
+                    <span class="inline-block h-2.5 w-2.5 shrink-0 rounded-full" [style.background-color]="row.color"></span>
+                    <span class="min-w-0 flex-1 truncate text-sm">{{ row.name }}</span>
+                    <input
+                      type="number"
+                      [name]="'payout-' + row.memberId"
+                      placeholder="R$"
+                      class="w-28 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-right text-sm text-white placeholder:text-slate-500 transition-all duration-200 focus:border-ruby-500/60 focus:outline-none"
+                      [ngModel]="row.amount"
+                      (ngModelChange)="vm.setPayoutAmount(row.memberId, $event)"
+                    />
+                  </div>
+                }
+              </div>
+
+              <div class="space-y-2">
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Custos de parceria (som, transporte…)</p>
+                @for (cost of vm.formCosts(); track $index) {
+                  <div class="flex items-center gap-3 rounded-xl bg-white/5 px-3 py-2">
+                    <span class="min-w-0 flex-1 truncate text-sm">{{ cost.description }}</span>
+                    <span class="text-sm font-semibold">{{ cost.amount | currency: 'BRL' }}</span>
+                    <button
+                      type="button"
+                      class="rounded-lg p-1 text-slate-500 transition-colors hover:bg-ruby-700/25 hover:text-ruby-300"
+                      (click)="vm.removeFormCost($index)"
+                    >
+                      <app-icon name="close" cssClass="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                }
+                <div class="flex gap-2">
+                  <input
+                    type="text"
+                    name="costDescription"
+                    placeholder="Descrição (ex.: Som)"
+                    class="min-w-0 flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-slate-500 transition-all duration-200 focus:border-ruby-500/60 focus:outline-none"
+                    [ngModel]="vm.formCostDescription()"
+                    (ngModelChange)="vm.formCostDescription.set($event)"
+                  />
+                  <input
+                    type="number"
+                    name="costAmount"
+                    placeholder="R$"
+                    class="w-24 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-right text-sm text-white placeholder:text-slate-500 transition-all duration-200 focus:border-ruby-500/60 focus:outline-none"
+                    [ngModel]="vm.formCostAmount()"
+                    (ngModelChange)="vm.formCostAmount.set($event)"
+                  />
+                  <button
+                    type="button"
+                    class="rounded-xl border border-white/15 px-3 text-sm text-slate-300 transition-all duration-200 hover:border-ruby-500/50 hover:text-ruby-300"
+                    (click)="vm.addFormCost()"
+                  >
+                    <app-icon name="plus" cssClass="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              @if (vm.formReserve() !== null) {
+                <div class="flex items-center justify-between rounded-xl border border-emerald-500/25 bg-emerald-500/10 px-4 py-2.5 text-sm">
+                  <span class="text-emerald-300">Fica para a banda</span>
+                  <span class="font-semibold" [class]="(vm.formReserve() ?? 0) < 0 ? 'text-ruby-300' : 'text-emerald-300'">
+                    {{ vm.formReserve() | currency: 'BRL' }}
+                  </span>
+                </div>
+              }
+            </div>
+          }
+          <textarea
+            name="notes"
+            rows="2"
+            placeholder="Observações (opcional)"
+            class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-slate-500 transition-all duration-200 focus:border-ruby-500/60 focus:outline-none"
+            [ngModel]="vm.formNotes()"
+            (ngModelChange)="vm.formNotes.set($event)"
+          ></textarea>
+          <button
+            type="submit"
+            class="w-full rounded-xl bg-gradient-to-r from-ruby-700 to-ruby-500 px-6 py-3 font-semibold text-white transition-all duration-200 hover:from-ruby-600 hover:to-ruby-400 active:scale-95"
+          >
+            Salvar evento
+          </button>
+        </form>
+      </div>
+    </div>
+  }
+
+  @if (vm.isLoading()) {
+    <div class="rounded-2xl border border-white/10 bg-white/5 p-10 text-center text-slate-400">Carregando…</div>
+  } @else {
+    <section class="space-y-3">
+      @if (vm.upcomingEvents().length === 0) {
+        <div class="rounded-2xl border border-white/10 bg-white/5 p-10 text-center text-slate-500">
+          Nada agendado.
+        </div>
+      }
+      @for (event of vm.upcomingEvents(); track event.id) {
+        <article class="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl transition-all duration-200 hover:border-white/20">
+          <div class="flex items-center gap-4 p-5">
+            <div class="flex w-14 shrink-0 flex-col items-center rounded-xl bg-ruby-700/25 py-2">
+              <span class="text-lg font-bold leading-none text-ruby-300">{{ event.date | date: 'dd' }}</span>
+              <span class="text-[10px] uppercase text-ruby-400">{{ event.date | date: 'MMM' }}</span>
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="flex flex-wrap items-center gap-2">
+                <p class="font-medium">{{ event.title }}</p>
+                <span
+                  class="rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
+                  [class]="
+                    event.type === 'show'
+                      ? 'bg-ruby-700/30 text-ruby-300'
+                      : event.type === 'rehearsal'
+                        ? 'bg-sky-500/15 text-sky-300'
+                        : event.type === 'fixed'
+                          ? 'bg-violet-500/15 text-violet-300'
+                          : 'bg-white/10 text-slate-300'
+                  "
+                >
+                  {{ vm.eventLabel(event.type) }}
+                </span>
+                @if (event.type === 'show' && event.payment_status === 'pending') {
+                  <span class="rounded-full bg-amber-500/15 px-2.5 py-0.5 text-[11px] font-semibold text-amber-300">Cachê a receber</span>
+                }
+                @if (event.type === 'show' && event.payment_status === 'received') {
+                  <span class="rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-300">Cachê recebido</span>
+                }
+              </div>
+              <p class="mt-0.5 text-xs text-slate-400">
+                @if (event.start_time) { {{ event.start_time.slice(0, 5) }} }
+                @if (event.location) { · {{ event.location }} }
+                @if (event.recurrence !== 'none') { · {{ vm.recurrenceLabel(event.recurrence) }} }
+              </p>
+            </div>
+            <div class="flex shrink-0 items-center gap-1">
+              @if (event.type === 'show') {
+                <button
+                  type="button"
+                  class="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
+                  (click)="vm.toggleExpand(event.id)"
+                  title="Detalhes do cachê"
+                >
+                  <app-icon name="money" cssClass="w-4 h-4" />
+                </button>
+              }
+              <button
+                type="button"
+                class="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-ruby-700/25 hover:text-ruby-300"
+                (click)="vm.deleteEvent(event)"
+                title="Excluir"
+              >
+                <app-icon name="trash" cssClass="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+          @if (vm.expandedEventId() === event.id && event.type === 'show') {
+            <div class="space-y-3 border-t border-white/8 px-5 py-4">
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <div class="text-sm">
+                  <p class="text-slate-400">
+                    Cachê:
+                    <span class="font-semibold text-white">{{ event.fee | currency: 'BRL' }}</span>
+                    @if (event.contractor) { · {{ event.contractor }} }
+                  </p>
+                </div>
+                @if (event.payment_status === 'pending') {
+                  <button
+                    type="button"
+                    class="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-emerald-500 active:scale-95"
+                    (click)="vm.markFeeReceived(event)"
+                  >
+                    Marcar como recebido
+                  </button>
+                }
+              </div>
+              <div class="space-y-2">
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Divisão entre a banda</p>
+                @for (payout of event.payouts; track payout.id) {
+                  <div class="flex items-center justify-between gap-3 rounded-xl bg-white/5 px-4 py-2.5">
+                    <div class="flex min-w-0 items-center gap-2">
+                      <span
+                        class="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
+                        [style.background-color]="payout.member.avatar_color"
+                      ></span>
+                      <span class="truncate text-sm">{{ payout.member.name }}</span>
+                    </div>
+                    <div class="flex shrink-0 items-center gap-3">
+                      @if (payout.received) {
+                        <span class="text-sm font-semibold">{{ payout.amount | currency: 'BRL' }}</span>
+                      } @else {
+                        <input
+                          type="number"
+                          class="w-24 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-right text-sm text-white transition-all duration-200 focus:border-ruby-500/60 focus:outline-none"
+                          [value]="payout.amount"
+                          (change)="vm.updatePayoutAmount(event, payout.id, $any($event.target).value)"
+                        />
+                      }
+                      <button
+                        type="button"
+                        class="rounded-full px-3 py-1 text-xs font-semibold transition-all duration-200"
+                        [class]="
+                          payout.received
+                            ? 'bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
+                            : 'bg-white/10 text-slate-400 hover:bg-white/20'
+                        "
+                        (click)="vm.togglePayout(event, payout.id, !payout.received)"
+                      >
+                        {{ payout.received ? 'Pago' : 'A pagar' }}
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
+
+              <div class="space-y-2">
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Custos de parceria</p>
+                @for (cost of event.costs; track cost.id) {
+                  <div class="flex items-center justify-between gap-3 rounded-xl bg-white/5 px-4 py-2.5">
+                    <span class="min-w-0 flex-1 truncate text-sm">{{ cost.description }}</span>
+                    <div class="flex shrink-0 items-center gap-3">
+                      <span class="text-sm font-semibold">{{ cost.amount | currency: 'BRL' }}</span>
+                      <button
+                        type="button"
+                        class="rounded-full px-3 py-1 text-xs font-semibold transition-all duration-200"
+                        [class]="
+                          cost.paid
+                            ? 'bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
+                            : 'bg-white/10 text-slate-400 hover:bg-white/20'
+                        "
+                        (click)="vm.toggleCost(event, cost.id, !cost.paid)"
+                      >
+                        {{ cost.paid ? 'Pago' : 'A pagar' }}
+                      </button>
+                      <button
+                        type="button"
+                        class="rounded-lg p-1 text-slate-500 transition-colors hover:bg-ruby-700/25 hover:text-ruby-300"
+                        (click)="vm.deleteCost(event, cost.id)"
+                        title="Excluir custo"
+                      >
+                        <app-icon name="trash" cssClass="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                }
+                <div class="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Novo custo (ex.: Som)"
+                    class="min-w-0 flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-slate-500 transition-all duration-200 focus:border-ruby-500/60 focus:outline-none"
+                    [value]="vm.newCostDescription()"
+                    (input)="vm.newCostDescription.set($any($event.target).value)"
+                  />
+                  <input
+                    type="number"
+                    placeholder="R$"
+                    class="w-24 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-right text-sm text-white placeholder:text-slate-500 transition-all duration-200 focus:border-ruby-500/60 focus:outline-none"
+                    [value]="vm.newCostAmount() ?? ''"
+                    (input)="vm.newCostAmount.set($any($event.target).valueAsNumber || null)"
+                  />
+                  <button
+                    type="button"
+                    class="rounded-xl border border-white/15 px-3 text-sm text-slate-300 transition-all duration-200 hover:border-ruby-500/50 hover:text-ruby-300"
+                    (click)="vm.addCost(event)"
+                  >
+                    <app-icon name="plus" cssClass="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              @if (vm.eventReserve(event) !== null) {
+                <div class="flex items-center justify-between rounded-xl border border-emerald-500/25 bg-emerald-500/10 px-4 py-2.5 text-sm">
+                  <span class="text-emerald-300">Fica para a banda</span>
+                  <span class="font-semibold" [class]="(vm.eventReserve(event) ?? 0) < 0 ? 'text-ruby-300' : 'text-emerald-300'">
+                    {{ vm.eventReserve(event) | currency: 'BRL' }}
+                  </span>
+                </div>
+              }
+            </div>
+          }
+        </article>
+      }
+    </section>
+
+    @if (vm.pastEvents().length > 0) {
+      <section>
+        <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">Eventos passados</h2>
+        <div class="space-y-2">
+          @for (event of vm.pastEvents(); track event.id) {
+            <div class="flex items-center gap-3 rounded-xl border border-white/5 bg-white/[0.03] px-5 py-3 opacity-70">
+              <span class="shrink-0 text-xs text-slate-500">{{ event.date | date: 'dd/MM/yy' }}</span>
+              <p class="min-w-0 flex-1 truncate text-sm text-slate-400">{{ event.title }}</p>
+              <span class="shrink-0 text-xs text-slate-500">{{ vm.eventLabel(event.type) }}</span>
+            </div>
+          }
+        </div>
+      </section>
+    }
+  }
+</div>

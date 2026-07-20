@@ -1,0 +1,192 @@
+<div class="mx-auto max-w-5xl space-y-6">
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold">Estudo</h1>
+      <p class="text-sm text-slate-400">Biblioteca de materiais da banda</p>
+    </div>
+    <button
+      type="button"
+      class="flex items-center gap-2 rounded-xl bg-gradient-to-r from-ruby-700 to-ruby-500 px-5 py-2.5 text-sm font-semibold text-white shadow-[0_0_20px_rgba(230,57,80,0.35)] transition-all duration-200 hover:from-ruby-600 hover:to-ruby-400 active:scale-95"
+      (click)="vm.openForm()"
+    >
+      <app-icon name="plus" cssClass="w-4 h-4" />
+      Novo material
+    </button>
+  </div>
+
+  <div class="flex flex-wrap gap-2">
+    @for (
+      option of [
+        { value: null, label: 'Todos' },
+        { value: 'to_study', label: 'A estudar' },
+        { value: 'studying', label: 'Estudando' },
+        { value: 'mastered', label: 'Dominado' }
+      ];
+      track option.label
+    ) {
+      <button
+        type="button"
+        class="rounded-full border px-4 py-1.5 text-sm font-medium transition-all duration-200"
+        [class]="
+          vm.statusFilter() === option.value
+            ? 'border-ruby-500/50 bg-ruby-700/25 text-ruby-300'
+            : 'border-white/10 text-slate-400 hover:border-white/25 hover:text-white'
+        "
+        (click)="vm.setFilter($any(option.value))"
+      >
+        {{ option.label }}
+      </button>
+    }
+  </div>
+
+  @if (vm.showForm()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" (click)="vm.closeForm()">
+      <div
+        class="w-full max-w-lg rounded-2xl border border-white/10 bg-surface p-6 shadow-[0_8px_32px_rgba(0,0,0,0.6)]"
+        (click)="$event.stopPropagation()"
+      >
+        <div class="mb-5 flex items-center justify-between">
+          <h2 class="text-lg font-semibold">Novo material</h2>
+          <button type="button" class="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-white/10 hover:text-white" (click)="vm.closeForm()">
+            <app-icon name="close" cssClass="w-5 h-5" />
+          </button>
+        </div>
+        <form class="space-y-4" (ngSubmit)="vm.submitForm()">
+          <input
+            type="text"
+            name="title"
+            placeholder="Título do material"
+            class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-slate-500 transition-all duration-200 focus:border-ruby-500/60 focus:outline-none"
+            [ngModel]="vm.formTitle()"
+            (ngModelChange)="vm.formTitle.set($event)"
+          />
+          <div class="grid grid-cols-4 gap-2">
+            @for (
+              option of [
+                { value: 'link', label: 'Link' },
+                { value: 'video', label: 'Vídeo' },
+                { value: 'pdf', label: 'PDF' },
+                { value: 'chord_chart', label: 'Cifra' }
+              ];
+              track option.value
+            ) {
+              <button
+                type="button"
+                class="rounded-xl border px-2 py-2 text-sm font-medium transition-all duration-200"
+                [class]="
+                  vm.formType() === option.value
+                    ? 'border-ruby-500/50 bg-ruby-700/25 text-ruby-300'
+                    : 'border-white/10 text-slate-400 hover:border-white/25'
+                "
+                (click)="vm.formType.set($any(option.value))"
+              >
+                {{ option.label }}
+              </button>
+            }
+          </div>
+          <input
+            type="url"
+            name="url"
+            placeholder="Endereço (URL)"
+            class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-slate-500 transition-all duration-200 focus:border-ruby-500/60 focus:outline-none"
+            [ngModel]="vm.formUrl()"
+            (ngModelChange)="vm.formUrl.set($event)"
+          />
+          <textarea
+            name="notes"
+            rows="2"
+            placeholder="Anotações (opcional)"
+            class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-slate-500 transition-all duration-200 focus:border-ruby-500/60 focus:outline-none"
+            [ngModel]="vm.formNotes()"
+            (ngModelChange)="vm.formNotes.set($event)"
+          ></textarea>
+          <label class="flex cursor-pointer items-center gap-3 text-sm text-slate-300">
+            <input
+              type="checkbox"
+              name="onlyMine"
+              class="h-4 w-4 accent-ruby-600"
+              [ngModel]="vm.formOnlyMine()"
+              (ngModelChange)="vm.formOnlyMine.set($event)"
+            />
+            Material pessoal (só meu, não da banda toda)
+          </label>
+          <button
+            type="submit"
+            class="w-full rounded-xl bg-gradient-to-r from-ruby-700 to-ruby-500 px-6 py-3 font-semibold text-white transition-all duration-200 hover:from-ruby-600 hover:to-ruby-400 active:scale-95"
+          >
+            Salvar material
+          </button>
+        </form>
+      </div>
+    </div>
+  }
+
+  @if (vm.isLoading()) {
+    <div class="rounded-2xl border border-white/10 bg-white/5 p-10 text-center text-slate-400">Carregando…</div>
+  } @else if (vm.filteredMaterials().length === 0) {
+    <div class="rounded-2xl border border-white/10 bg-white/5 p-10 text-center text-slate-500">
+      Nenhum material aqui ainda.
+    </div>
+  } @else {
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      @for (material of vm.filteredMaterials(); track material.id) {
+        <article class="flex flex-col rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-xl transition-all duration-200 hover:border-white/20">
+          <div class="mb-3 flex items-start justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-ruby-700/25 text-ruby-400">
+                <app-icon
+                  [name]="material.type === 'video' ? 'video' : material.type === 'pdf' ? 'file' : material.type === 'chord_chart' ? 'music' : 'link'"
+                  cssClass="w-4 h-4"
+                />
+              </div>
+              <span class="rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] font-semibold text-slate-300">
+                {{ vm.typeLabel(material.type) }}
+              </span>
+            </div>
+            <button
+              type="button"
+              class="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-ruby-700/25 hover:text-ruby-300"
+              (click)="vm.deleteMaterial(material)"
+              title="Excluir"
+            >
+              <app-icon name="trash" cssClass="w-4 h-4" />
+            </button>
+          </div>
+          <p class="font-medium">{{ material.title }}</p>
+          @if (material.notes) {
+            <p class="mt-1 text-sm text-slate-400">{{ material.notes }}</p>
+          }
+          @if (material.owner) {
+            <p class="mt-1 text-xs text-slate-500">Pessoal · {{ material.owner.name.split(' ')[0] }}</p>
+          }
+          <div class="mt-auto flex items-center justify-between gap-2 pt-4">
+            <button
+              type="button"
+              class="rounded-full px-3 py-1 text-xs font-semibold transition-all duration-200"
+              [class]="
+                material.status === 'mastered'
+                  ? 'bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
+                  : material.status === 'studying'
+                    ? 'bg-amber-500/15 text-amber-300 hover:bg-amber-500/25'
+                    : 'bg-white/10 text-slate-300 hover:bg-white/20'
+              "
+              (click)="vm.cycleStatus(material)"
+            >
+              {{ vm.statusLabel(material.status) }}
+            </button>
+            @if (material.url) {
+              <a
+                [href]="material.url"
+                target="_blank"
+                rel="noopener"
+                class="text-xs font-medium text-ruby-400 transition-colors hover:text-ruby-300"
+              >
+                abrir →
+              </a>
+            }
+          </div>
+        </article>
+      }
+    </div>
+  }
+</div>

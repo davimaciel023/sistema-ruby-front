@@ -1,59 +1,53 @@
-# ForroRuby
+# Forró Ruby — Frontend (Angular)
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.6.
+Interface web do sistema de gestão da banda Forró Ruby. Angular 21 (standalone + signals) + Tailwind CSS 4, tema escuro rubi, 100% responsivo.
 
-## Development server
+## Como rodar
 
-To start a local development server, run:
-
-```bash
-ng serve
-```
-
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+O backend precisa estar no ar em `http://localhost:8012` (ver `sistema-ruby-back/README.md`).
 
 ```bash
-ng generate component component-name
+npm install
+npm start          # http://localhost:4200
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+Build de produção: `npm run build` (sai em `dist/forro_ruby`). A URL da API fica em `src/app/core/config/api.config.ts` — troque ao publicar no VPS.
 
-```bash
-ng generate --help
+## Arquitetura (MVVM)
+
+```
+src/app/
+├── core/
+│   ├── auth/          # AuthService (JWT + signals), interceptor, guard
+│   ├── config/        # api.config.ts (URL da API)
+│   ├── models/        # interfaces espelhando a API
+│   └── services/      # services compartilhados (members)
+├── shared/icons/      # ícones SVG reutilizáveis (icons.ts + IconComponent) — sem emojis
+├── layout/            # ShellComponent (sidebar + topbar responsivos)
+└── features/<nome>/
+    ├── services/      # chamadas HTTP da feature
+    ├── <nome>.viewmodel.ts   # estado via signal/computed
+    ├── <nome>.component.ts   # injeta a ViewModel (providers próprios)
+    └── <nome>.component.html
 ```
 
-## Building
+## Telas
 
-To build the project run:
+| Rota | Feature |
+|---|---|
+| `/login` | Login (JWT) |
+| `/dashboard` | Alertas de prazo (atrasada/24h/48h), minhas tarefas, próximos eventos |
+| `/tarefas` | CRUD de tarefas, filtro por integrante, comentários, concluir |
+| `/agenda` | Shows/ensaios/lembretes/fixas; cachê, divisão entre os 3 e controle de quem recebeu |
+| `/financeiro` | Saldo, receitas, despesas, cachês a receber, lançamentos |
+| `/ponto` | Entrada/saída, meta diária 1h30 com barra de progresso, painel semanal da banda |
+| `/estudo` | Biblioteca de materiais (link/vídeo/PDF/cifra) com status |
+| `/conteudo` | Cronograma de postagens + ideias de vídeo |
+| `/repertorio` | Cadastro de músicas (tom, duração, letra, cifra), montador com tempo de show e download do PDF |
 
-```bash
-ng build
-```
+## Convenções
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+- Ícones: sempre via `<app-icon name="..." />` — os SVGs vivem só em `shared/icons/icons.ts`.
+- Estado: `signal`/`computed` nas ViewModels; componentes não têm lógica de negócio.
+- Controle de fluxo: `@if` / `@for` (nunca `*ngIf`/`*ngFor`).
+- Estilo: Tailwind puro, tema em `src/styles.css` (`@theme` com paleta `ruby`).

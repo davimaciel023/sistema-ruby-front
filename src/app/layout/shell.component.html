@@ -1,0 +1,81 @@
+<div class="flex min-h-dvh">
+  @if (sidebarOpen()) {
+    <div
+      class="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm lg:hidden"
+      (click)="closeSidebar()"
+    ></div>
+  }
+
+  <aside
+    class="fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-white/8 bg-surface/95 backdrop-blur-xl transition-transform duration-300 ease-out lg:translate-x-0"
+    [class.translate-x-0]="sidebarOpen()"
+    [class.-translate-x-full]="!sidebarOpen()"
+  >
+    <div class="flex items-center gap-3 px-6 py-6">
+      <img src="assets/logo-secundaria.png" alt="Forró Ruby" class="h-11 w-11 object-contain" />
+      <div>
+        <p class="text-lg font-bold tracking-wide">Forró <span class="text-ruby-500">Ruby</span></p>
+        <p class="text-xs text-slate-400">Gestão da banda</p>
+      </div>
+    </div>
+
+    <nav class="flex-1 space-y-1 overflow-y-auto px-3 py-2">
+      @for (item of navItems; track item.route) {
+        <a
+          [routerLink]="item.route"
+          routerLinkActive="bg-ruby-700/25 text-ruby-300 border-ruby-500/40"
+          class="flex items-center gap-3 rounded-xl border border-transparent px-4 py-3 text-sm font-medium text-slate-300 transition-all duration-200 hover:bg-white/5 hover:text-white"
+          (click)="closeSidebar()"
+        >
+          <app-icon [name]="item.icon" cssClass="w-5 h-5" />
+          {{ item.label }}
+        </a>
+      }
+    </nav>
+
+    <div class="border-t border-white/8 p-4">
+      @if (auth.currentMember(); as member) {
+        <div class="mb-3 flex items-center gap-3">
+          <div
+            class="flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold text-white"
+            [style.background-color]="member.avatar_color"
+          >
+            {{ member.name.charAt(0) }}
+          </div>
+          <div class="min-w-0">
+            <p class="truncate text-sm font-semibold">{{ member.name }}</p>
+            <p class="truncate text-xs text-slate-400">{{ member.role }}</p>
+          </div>
+        </div>
+      }
+      <button
+        type="button"
+        class="flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 px-4 py-2.5 text-sm font-medium text-slate-300 transition-all duration-200 hover:border-ruby-500/40 hover:bg-ruby-700/20 hover:text-ruby-300"
+        (click)="auth.logout()"
+      >
+        <app-icon name="logout" cssClass="w-4 h-4" />
+        Sair
+      </button>
+    </div>
+  </aside>
+
+  <div class="flex min-w-0 flex-1 flex-col lg:pl-64">
+    <header
+      class="sticky top-0 z-20 flex items-center gap-3 border-b border-white/8 bg-ink/80 px-4 py-3 backdrop-blur-xl lg:hidden"
+    >
+      <button
+        type="button"
+        class="rounded-lg p-2 text-slate-300 transition-colors hover:bg-white/10"
+        (click)="toggleSidebar()"
+      >
+        <app-icon name="menu" cssClass="w-6 h-6" />
+      </button>
+      <img src="assets/logo-secundaria.png" alt="Forró Ruby" class="h-8 w-8 object-contain" />
+      <p class="font-bold">Forró <span class="text-ruby-500">Ruby</span></p>
+    </header>
+
+    <main class="flex-1 px-4 py-6 sm:px-6 lg:px-10">
+      <router-outlet />
+    </main>
+  </div>
+</div>

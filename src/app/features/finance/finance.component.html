@@ -1,0 +1,182 @@
+<div class="mx-auto max-w-5xl space-y-6">
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold">Financeiro</h1>
+      <p class="text-sm text-slate-400">Cachês, despesas e o caixa da banda</p>
+    </div>
+    <button
+      type="button"
+      class="flex items-center gap-2 rounded-xl bg-gradient-to-r from-ruby-700 to-ruby-500 px-5 py-2.5 text-sm font-semibold text-white shadow-[0_0_20px_rgba(230,57,80,0.35)] transition-all duration-200 hover:from-ruby-600 hover:to-ruby-400 active:scale-95"
+      (click)="vm.openForm()"
+    >
+      <app-icon name="plus" cssClass="w-4 h-4" />
+      Novo lançamento
+    </button>
+  </div>
+
+  @if (vm.summary(); as summary) {
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <div class="rounded-2xl border border-emerald-500/25 bg-emerald-500/10 p-5 backdrop-blur-xl">
+        <p class="text-xs font-medium uppercase tracking-wide text-emerald-300/80">Reserva da banda</p>
+        <p class="mt-1 text-2xl font-bold" [class]="summary.balance >= 0 ? 'text-emerald-400' : 'text-ruby-400'">
+          {{ summary.balance | currency: 'BRL' }}
+        </p>
+        <p class="mt-1 text-[11px] text-slate-400">O que sobra depois de pagar partes e custos</p>
+      </div>
+      <div class="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-xl">
+        <p class="text-xs font-medium uppercase tracking-wide text-slate-400">Receitas</p>
+        <p class="mt-1 flex items-center gap-1.5 text-2xl font-bold text-emerald-400">
+          <app-icon name="arrow-up" cssClass="w-5 h-5" />
+          {{ summary.total_income | currency: 'BRL' }}
+        </p>
+      </div>
+      <div class="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-xl">
+        <p class="text-xs font-medium uppercase tracking-wide text-slate-400">Despesas</p>
+        <p class="mt-1 flex items-center gap-1.5 text-2xl font-bold text-ruby-400">
+          <app-icon name="arrow-down" cssClass="w-5 h-5" />
+          {{ summary.total_expense | currency: 'BRL' }}
+        </p>
+      </div>
+      <div class="rounded-2xl border border-amber-500/25 bg-amber-500/10 p-5 backdrop-blur-xl">
+        <p class="text-xs font-medium uppercase tracking-wide text-amber-300/80">Cachês a receber</p>
+        <p class="mt-1 text-2xl font-bold text-amber-300">{{ summary.pending_fees | currency: 'BRL' }}</p>
+      </div>
+      <div class="rounded-2xl border border-sky-500/25 bg-sky-500/10 p-5 backdrop-blur-xl">
+        <p class="text-xs font-medium uppercase tracking-wide text-sky-300/80">A pagar (partes + custos)</p>
+        <p class="mt-1 text-2xl font-bold text-sky-300">
+          {{ summary.pending_payouts + summary.pending_costs | currency: 'BRL' }}
+        </p>
+        <p class="mt-1 text-[11px] text-slate-400">De shows já recebidos</p>
+      </div>
+    </div>
+  }
+
+  @if (vm.showForm()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" (click)="vm.closeForm()">
+      <div
+        class="w-full max-w-lg rounded-2xl border border-white/10 bg-surface p-6 shadow-[0_8px_32px_rgba(0,0,0,0.6)]"
+        (click)="$event.stopPropagation()"
+      >
+        <div class="mb-5 flex items-center justify-between">
+          <h2 class="text-lg font-semibold">Novo lançamento</h2>
+          <button type="button" class="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-white/10 hover:text-white" (click)="vm.closeForm()">
+            <app-icon name="close" cssClass="w-5 h-5" />
+          </button>
+        </div>
+        <form class="space-y-4" (ngSubmit)="vm.submitForm()">
+          <div class="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              class="rounded-xl border px-3 py-2.5 text-sm font-medium transition-all duration-200"
+              [class]="
+                vm.formType() === 'income'
+                  ? 'border-emerald-500/50 bg-emerald-500/15 text-emerald-300'
+                  : 'border-white/10 text-slate-400 hover:border-white/25'
+              "
+              (click)="vm.formType.set('income')"
+            >
+              Receita
+            </button>
+            <button
+              type="button"
+              class="rounded-xl border px-3 py-2.5 text-sm font-medium transition-all duration-200"
+              [class]="
+                vm.formType() === 'expense'
+                  ? 'border-ruby-500/50 bg-ruby-700/25 text-ruby-300'
+                  : 'border-white/10 text-slate-400 hover:border-white/25'
+              "
+              (click)="vm.formType.set('expense')"
+            >
+              Despesa
+            </button>
+          </div>
+          <input
+            type="text"
+            name="category"
+            placeholder="Categoria (transporte, equipamento, cachê…)"
+            class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-slate-500 transition-all duration-200 focus:border-ruby-500/60 focus:outline-none"
+            [ngModel]="vm.formCategory()"
+            (ngModelChange)="vm.formCategory.set($event)"
+          />
+          <input
+            type="text"
+            name="description"
+            placeholder="Descrição (opcional)"
+            class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-slate-500 transition-all duration-200 focus:border-ruby-500/60 focus:outline-none"
+            [ngModel]="vm.formDescription()"
+            (ngModelChange)="vm.formDescription.set($event)"
+          />
+          <div class="grid gap-4 sm:grid-cols-2">
+            <input
+              type="number"
+              name="amount"
+              step="0.01"
+              placeholder="Valor (R$)"
+              class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-slate-500 transition-all duration-200 focus:border-ruby-500/60 focus:outline-none"
+              [ngModel]="vm.formAmount()"
+              (ngModelChange)="vm.formAmount.set($event)"
+            />
+            <input
+              type="date"
+              name="date"
+              class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white transition-all duration-200 focus:border-ruby-500/60 focus:outline-none"
+              [ngModel]="vm.formDate()"
+              (ngModelChange)="vm.formDate.set($event)"
+            />
+          </div>
+          <button
+            type="submit"
+            class="w-full rounded-xl bg-gradient-to-r from-ruby-700 to-ruby-500 px-6 py-3 font-semibold text-white transition-all duration-200 hover:from-ruby-600 hover:to-ruby-400 active:scale-95"
+          >
+            Salvar lançamento
+          </button>
+        </form>
+      </div>
+    </div>
+  }
+
+  @if (vm.isLoading()) {
+    <div class="rounded-2xl border border-white/10 bg-white/5 p-10 text-center text-slate-400">Carregando…</div>
+  } @else {
+    <section class="overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl">
+      @if (vm.entries().length === 0) {
+        <p class="p-10 text-center text-slate-500">Nenhum lançamento ainda.</p>
+      } @else {
+        <ul class="divide-y divide-white/8">
+          @for (entry of vm.entries(); track entry.id) {
+            <li class="flex items-center gap-4 px-5 py-4">
+              <div
+                class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+                [class]="entry.type === 'income' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-ruby-700/25 text-ruby-400'"
+              >
+                <app-icon [name]="entry.type === 'income' ? 'arrow-up' : 'arrow-down'" cssClass="w-4 h-4" />
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="truncate text-sm font-medium capitalize">{{ entry.category }}</p>
+                <p class="truncate text-xs text-slate-400">
+                  {{ entry.date | date: 'dd/MM/yyyy' }}
+                  @if (entry.description) { · {{ entry.description }} }
+                  · por {{ entry.created_by.name.split(' ')[0] }}
+                </p>
+              </div>
+              <p
+                class="shrink-0 font-semibold"
+                [class]="entry.type === 'income' ? 'text-emerald-400' : 'text-ruby-400'"
+              >
+                {{ entry.type === 'income' ? '+' : '−' }}{{ entry.amount | currency: 'BRL' }}
+              </p>
+              <button
+                type="button"
+                class="shrink-0 rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-ruby-700/25 hover:text-ruby-300"
+                (click)="vm.deleteEntry(entry)"
+                title="Excluir"
+              >
+                <app-icon name="trash" cssClass="w-4 h-4" />
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  }
+</div>

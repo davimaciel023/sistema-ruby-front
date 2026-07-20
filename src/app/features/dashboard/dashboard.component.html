@@ -1,0 +1,117 @@
+<div class="mx-auto max-w-6xl space-y-6">
+  <div>
+    <h1 class="text-2xl font-bold">Início</h1>
+    <p class="text-sm text-slate-400">Resumo do que está acontecendo na banda</p>
+  </div>
+
+  @if (vm.isLoading()) {
+    <div class="rounded-2xl border border-white/10 bg-white/5 p-10 text-center text-slate-400">
+      Carregando…
+    </div>
+  } @else if (vm.data(); as data) {
+    @if (vm.overdueAlerts().length > 0 || vm.dueSoonAlerts().length > 0) {
+      <section class="space-y-3">
+        @for (alert of vm.overdueAlerts(); track alert.task.id) {
+          <a
+            routerLink="/tarefas"
+            class="flex items-center gap-3 rounded-2xl border border-ruby-500/40 bg-ruby-700/20 px-5 py-4 transition-all duration-200 hover:border-ruby-400/60 hover:bg-ruby-700/30"
+          >
+            <app-icon name="alert-triangle" cssClass="w-5 h-5 text-ruby-400 shrink-0" />
+            <div class="min-w-0 flex-1">
+              <p class="text-sm font-semibold text-ruby-200">Tarefa atrasada: {{ alert.task.title }}</p>
+              <p class="text-xs text-ruby-300/80">
+                {{ alert.task.assignee.name }} · venceu {{ alert.task.due_at | date: 'dd/MM HH:mm' }}
+              </p>
+            </div>
+          </a>
+        }
+        @for (alert of vm.dueSoonAlerts(); track alert.task.id) {
+          <a
+            routerLink="/tarefas"
+            class="flex items-center gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-5 py-4 transition-all duration-200 hover:border-amber-400/50 hover:bg-amber-500/15"
+          >
+            <app-icon name="bell" cssClass="w-5 h-5 text-amber-400 shrink-0" />
+            <div class="min-w-0 flex-1">
+              <p class="text-sm font-semibold text-amber-200">
+                Prazo {{ alert.level === 'urgent' ? 'em menos de 24h' : 'chegando' }}: {{ alert.task.title }}
+              </p>
+              <p class="text-xs text-amber-300/80">
+                {{ alert.task.assignee.name }} · vence {{ alert.task.due_at | date: 'dd/MM HH:mm' }}
+              </p>
+            </div>
+          </a>
+        }
+      </section>
+    }
+
+    <div class="grid gap-6 lg:grid-cols-2">
+      <section class="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-xl">
+        <div class="mb-4 flex items-center justify-between">
+          <h2 class="flex items-center gap-2 font-semibold">
+            <app-icon name="tasks" cssClass="w-5 h-5 text-ruby-400" />
+            Minhas tarefas pendentes
+          </h2>
+          <a routerLink="/tarefas" class="text-xs font-medium text-ruby-400 transition-colors hover:text-ruby-300">ver todas</a>
+        </div>
+        @if (data.my_pending_tasks.length === 0) {
+          <p class="py-6 text-center text-sm text-slate-500">Nenhuma tarefa pendente. Tudo em dia!</p>
+        } @else {
+          <ul class="space-y-2">
+            @for (task of data.my_pending_tasks; track task.id) {
+              <li class="flex items-center justify-between gap-3 rounded-xl bg-white/5 px-4 py-3">
+                <div class="min-w-0">
+                  <p class="truncate text-sm font-medium">{{ task.title }}</p>
+                  <p class="text-xs text-slate-400">vence {{ task.due_at | date: 'dd/MM HH:mm' }}</p>
+                </div>
+                <span
+                  class="shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
+                  [class]="
+                    task.priority === 'high'
+                      ? 'bg-ruby-700/30 text-ruby-300'
+                      : task.priority === 'medium'
+                        ? 'bg-amber-500/15 text-amber-300'
+                        : 'bg-white/10 text-slate-300'
+                  "
+                >
+                  {{ task.priority === 'high' ? 'Alta' : task.priority === 'medium' ? 'Média' : 'Baixa' }}
+                </span>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+
+      <section class="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-xl">
+        <div class="mb-4 flex items-center justify-between">
+          <h2 class="flex items-center gap-2 font-semibold">
+            <app-icon name="calendar" cssClass="w-5 h-5 text-ruby-400" />
+            Próximos eventos
+          </h2>
+          <a routerLink="/agenda" class="text-xs font-medium text-ruby-400 transition-colors hover:text-ruby-300">agenda</a>
+        </div>
+        @if (data.upcoming_events.length === 0) {
+          <p class="py-6 text-center text-sm text-slate-500">Nada agendado por enquanto.</p>
+        } @else {
+          <ul class="space-y-2">
+            @for (event of data.upcoming_events; track event.id) {
+              <li class="flex items-center gap-4 rounded-xl bg-white/5 px-4 py-3">
+                <div class="flex w-12 shrink-0 flex-col items-center rounded-lg bg-ruby-700/25 py-1.5">
+                  <span class="text-base font-bold leading-none text-ruby-300">{{ event.date | date: 'dd' }}</span>
+                  <span class="text-[10px] uppercase text-ruby-400">{{ event.date | date: 'MMM' }}</span>
+                </div>
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-sm font-medium">{{ event.title }}</p>
+                  <p class="text-xs text-slate-400">
+                    {{ vm.eventLabel(event.type) }}
+                    @if (event.start_time) { · {{ event.start_time.slice(0, 5) }} }
+                    @if (event.location) { · {{ event.location }} }
+                  </p>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    </div>
+  }
+</div>

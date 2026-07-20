@@ -1,0 +1,460 @@
+<div class="mx-auto max-w-5xl space-y-6">
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold">Repertório</h1>
+      <p class="text-sm text-slate-400">Músicas, montagem de repertório e tempo de show</p>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      @if (vm.activeTab() === 'repertoires') {
+        <button
+          type="button"
+          class="flex items-center gap-2 rounded-xl border border-white/15 px-5 py-2.5 text-sm font-semibold text-slate-200 transition-all duration-200 hover:border-ruby-500/50 hover:text-ruby-300 active:scale-95"
+          (click)="vm.openPdfPicker()"
+        >
+          <app-icon name="file" cssClass="w-4 h-4" />
+          Montar PDF
+        </button>
+      }
+      <button
+        type="button"
+        class="flex items-center gap-2 rounded-xl bg-gradient-to-r from-ruby-700 to-ruby-500 px-5 py-2.5 text-sm font-semibold text-white shadow-[0_0_20px_rgba(230,57,80,0.35)] transition-all duration-200 hover:from-ruby-600 hover:to-ruby-400 active:scale-95"
+        (click)="vm.activeTab() === 'repertoires' ? vm.openBuilder() : vm.openSongForm()"
+      >
+        <app-icon name="plus" cssClass="w-4 h-4" />
+        {{ vm.activeTab() === 'repertoires' ? 'Montar repertório' : 'Nova música' }}
+      </button>
+    </div>
+  </div>
+
+  @if (vm.showPdfPicker()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" (click)="vm.closePdfPicker()">
+      <div
+        class="max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-2xl border border-white/10 bg-surface p-6 shadow-[0_8px_32px_rgba(0,0,0,0.6)]"
+        (click)="$event.stopPropagation()"
+      >
+        <div class="mb-2 flex items-center justify-between">
+          <h2 class="text-lg font-semibold">Montar PDF do show</h2>
+          <button type="button" class="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-white/10 hover:text-white" (click)="vm.closePdfPicker()">
+            <app-icon name="close" cssClass="w-5 h-5" />
+          </button>
+        </div>
+        <p class="mb-4 text-sm text-slate-400">
+          Escolha os blocos (na ordem em que clicar) para juntar em um PDF só, com o tempo total do show.
+        </p>
+        <div class="space-y-2">
+          @for (rep of vm.repertoires(); track rep.id) {
+            <button
+              type="button"
+              class="flex w-full items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left transition-all duration-200"
+              [class]="
+                vm.isPdfSelected(rep.id)
+                  ? 'border-ruby-500/50 bg-ruby-700/20'
+                  : 'border-white/10 bg-white/5 hover:border-white/25'
+              "
+              (click)="vm.togglePdfSelection(rep.id)"
+            >
+              <div class="min-w-0">
+                <p class="truncate text-sm font-medium">{{ rep.name }}</p>
+                <p class="text-xs text-slate-400">
+                  {{ rep.items.length }} músicas · {{ vm.formatDuration(rep.total_seconds) }}
+                </p>
+              </div>
+              @if (vm.isPdfSelected(rep.id)) {
+                <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-ruby-600 text-xs font-bold text-white">
+                  {{ vm.pdfSelectedIds().indexOf(rep.id) + 1 }}
+                </span>
+              }
+            </button>
+          }
+          @if (vm.repertoires().length === 0) {
+            <p class="rounded-xl border border-white/10 bg-white/5 p-6 text-center text-sm text-slate-500">
+              Nenhum repertório cadastrado ainda.
+            </p>
+          }
+        </div>
+        @if (vm.pdfSelectedIds().length > 0) {
+          <div class="mt-4 flex items-center justify-between rounded-xl border border-emerald-500/25 bg-emerald-500/10 px-4 py-2.5 text-sm">
+            <span class="text-emerald-300">Tempo total do show</span>
+            <span class="font-semibold text-emerald-300">{{ vm.formatDuration(vm.pdfSelectedTotalSeconds()) }}</span>
+          </div>
+        }
+        <button
+          type="button"
+          class="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-ruby-700 to-ruby-500 px-6 py-3 font-semibold text-white transition-all duration-200 hover:from-ruby-600 hover:to-ruby-400 active:scale-95 disabled:opacity-50"
+          [disabled]="vm.pdfSelectedIds().length === 0 || vm.pdfDownloading()"
+          (click)="vm.downloadCombinedPdf()"
+        >
+          <app-icon name="download" cssClass="w-4 h-4" />
+          {{ vm.pdfDownloading() ? 'Gerando PDF…' : 'Baixar PDF do show' }}
+        </button>
+      </div>
+    </div>
+  }
+
+  <div class="flex gap-2">
+    <button
+      type="button"
+      class="rounded-full border px-4 py-1.5 text-sm font-medium transition-all duration-200"
+      [class]="
+        vm.activeTab() === 'repertoires'
+          ? 'border-ruby-500/50 bg-ruby-700/25 text-ruby-300'
+          : 'border-white/10 text-slate-400 hover:border-white/25 hover:text-white'
+      "
+      (click)="vm.activeTab.set('repertoires')"
+    >
+      Repertórios
+    </button>
+    <button
+      type="button"
+      class="rounded-full border px-4 py-1.5 text-sm font-medium transition-all duration-200"
+      [class]="
+        vm.activeTab() === 'songs'
+          ? 'border-ruby-500/50 bg-ruby-700/25 text-ruby-300'
+          : 'border-white/10 text-slate-400 hover:border-white/25 hover:text-white'
+      "
+      (click)="vm.activeTab.set('songs')"
+    >
+      Músicas ({{ vm.songs().length }})
+    </button>
+  </div>
+
+  @if (vm.showSongForm()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" (click)="vm.closeSongForm()">
+      <div
+        class="max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-2xl border border-white/10 bg-surface p-6 shadow-[0_8px_32px_rgba(0,0,0,0.6)]"
+        (click)="$event.stopPropagation()"
+      >
+        <div class="mb-5 flex items-center justify-between">
+          <h2 class="text-lg font-semibold">{{ vm.editingSongId() === null ? 'Nova música' : 'Editar música' }}</h2>
+          <button type="button" class="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-white/10 hover:text-white" (click)="vm.closeSongForm()">
+            <app-icon name="close" cssClass="w-5 h-5" />
+          </button>
+        </div>
+        <form class="space-y-4" (ngSubmit)="vm.submitSongForm()">
+          <input
+            type="text"
+            name="title"
+            placeholder="Nome da música"
+            class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-slate-500 transition-all duration-200 focus:border-ruby-500/60 focus:outline-none"
+            [ngModel]="vm.songTitle()"
+            (ngModelChange)="vm.songTitle.set($event)"
+          />
+          <input
+            type="text"
+            name="artist"
+            placeholder="Artista original"
+            class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-slate-500 transition-all duration-200 focus:border-ruby-500/60 focus:outline-none"
+            [ngModel]="vm.songArtist()"
+            (ngModelChange)="vm.songArtist.set($event)"
+          />
+          <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <div>
+              <label class="mb-1 block text-xs font-medium text-slate-400">Tom</label>
+              <input
+                type="text"
+                name="key"
+                placeholder="G, Am…"
+                class="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-3 text-white placeholder:text-slate-500 transition-all duration-200 focus:border-ruby-500/60 focus:outline-none"
+                [ngModel]="vm.songKey()"
+                (ngModelChange)="vm.songKey.set($event)"
+              />
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-medium text-slate-400">Minutos</label>
+              <input
+                type="number"
+                name="minutes"
+                min="0"
+                class="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-3 text-white transition-all duration-200 focus:border-ruby-500/60 focus:outline-none"
+                [ngModel]="vm.songMinutes()"
+                (ngModelChange)="vm.songMinutes.set($event)"
+              />
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-medium text-slate-400">Segundos</label>
+              <input
+                type="number"
+                name="seconds"
+                min="0"
+                max="59"
+                class="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-3 text-white transition-all duration-200 focus:border-ruby-500/60 focus:outline-none"
+                [ngModel]="vm.songSeconds()"
+                (ngModelChange)="vm.songSeconds.set($event)"
+              />
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-medium text-slate-400">BPM</label>
+              <input
+                type="number"
+                name="bpm"
+                class="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-3 text-white transition-all duration-200 focus:border-ruby-500/60 focus:outline-none"
+                [ngModel]="vm.songBpm()"
+                (ngModelChange)="vm.songBpm.set($event)"
+              />
+            </div>
+          </div>
+          <textarea
+            name="chords"
+            rows="3"
+            placeholder="Cifra (opcional)"
+            class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-mono text-sm text-white placeholder:text-slate-500 transition-all duration-200 focus:border-ruby-500/60 focus:outline-none"
+            [ngModel]="vm.songChords()"
+            (ngModelChange)="vm.songChords.set($event)"
+          ></textarea>
+          <textarea
+            name="lyrics"
+            rows="3"
+            placeholder="Letra (opcional)"
+            class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-500 transition-all duration-200 focus:border-ruby-500/60 focus:outline-none"
+            [ngModel]="vm.songLyrics()"
+            (ngModelChange)="vm.songLyrics.set($event)"
+          ></textarea>
+          <button
+            type="submit"
+            class="w-full rounded-xl bg-gradient-to-r from-ruby-700 to-ruby-500 px-6 py-3 font-semibold text-white transition-all duration-200 hover:from-ruby-600 hover:to-ruby-400 active:scale-95"
+          >
+            Salvar música
+          </button>
+        </form>
+      </div>
+    </div>
+  }
+
+  @if (vm.showBuilder()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" (click)="vm.closeBuilder()">
+      <div
+        class="flex max-h-[92dvh] w-full max-w-3xl flex-col rounded-2xl border border-white/10 bg-surface shadow-[0_8px_32px_rgba(0,0,0,0.6)]"
+        (click)="$event.stopPropagation()"
+      >
+        <div class="flex items-center justify-between border-b border-white/8 px-6 py-4">
+          <h2 class="text-lg font-semibold">Montar repertório</h2>
+          <button type="button" class="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-white/10 hover:text-white" (click)="vm.closeBuilder()">
+            <app-icon name="close" cssClass="w-5 h-5" />
+          </button>
+        </div>
+        <div class="grid flex-1 gap-0 overflow-hidden sm:grid-cols-2">
+          <div class="flex flex-col gap-3 overflow-y-auto border-b border-white/8 p-5 sm:border-b-0 sm:border-r">
+            <input
+              type="text"
+              name="builderName"
+              placeholder="Nome do repertório (ex.: São João 2026)"
+              class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-slate-500 transition-all duration-200 focus:border-ruby-500/60 focus:outline-none"
+              [ngModel]="vm.builderName()"
+              (ngModelChange)="vm.builderName.set($event)"
+            />
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="mb-1 block text-xs font-medium text-slate-400">Data (opcional)</label>
+                <input
+                  type="date"
+                  name="builderDate"
+                  class="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-white transition-all duration-200 focus:border-ruby-500/60 focus:outline-none"
+                  [ngModel]="vm.builderDate()"
+                  (ngModelChange)="vm.builderDate.set($event)"
+                />
+              </div>
+              <div>
+                <label class="mb-1 block text-xs font-medium text-slate-400">Pausa entre músicas (s)</label>
+                <input
+                  type="number"
+                  name="builderGap"
+                  min="0"
+                  class="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-white transition-all duration-200 focus:border-ruby-500/60 focus:outline-none"
+                  [ngModel]="vm.builderGap()"
+                  (ngModelChange)="vm.builderGap.set($event)"
+                />
+              </div>
+            </div>
+            <input
+              type="text"
+              name="builderSearch"
+              placeholder="Buscar música…"
+              class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-slate-500 transition-all duration-200 focus:border-ruby-500/60 focus:outline-none"
+              [ngModel]="vm.builderSearch()"
+              (ngModelChange)="vm.builderSearch.set($event)"
+            />
+            <div class="space-y-2">
+              @for (song of vm.availableSongs(); track song.id) {
+                <button
+                  type="button"
+                  class="flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-left transition-all duration-200 hover:border-ruby-500/40 hover:bg-ruby-700/15"
+                  (click)="vm.addToBuilder(song)"
+                >
+                  <div class="min-w-0">
+                    <p class="truncate text-sm font-medium">{{ song.title }}</p>
+                    <p class="text-xs text-slate-500">{{ song.key }} · {{ vm.formatDuration(song.duration_seconds) }}</p>
+                  </div>
+                  <app-icon name="plus" cssClass="w-4 h-4 text-ruby-400 shrink-0" />
+                </button>
+              } @empty {
+                <p class="py-4 text-center text-sm text-slate-500">Nenhuma música disponível.</p>
+              }
+            </div>
+          </div>
+          <div class="flex flex-col overflow-y-auto p-5">
+            <div class="mb-3 flex items-center justify-between">
+              <p class="text-sm font-semibold">Ordem do show</p>
+              <span class="rounded-full bg-ruby-700/25 px-3 py-1 text-xs font-bold text-ruby-300">
+                {{ vm.formatDuration(vm.builderTotalSeconds()) }}
+              </span>
+            </div>
+            <div class="flex-1 space-y-2">
+              @for (item of vm.builderItems(); track $index) {
+                <div class="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5">
+                  <span class="w-5 shrink-0 text-center text-xs font-bold text-ruby-400">{{ $index + 1 }}</span>
+                  <div class="min-w-0 flex-1">
+                    <p class="truncate text-sm font-medium">{{ item.song.title }}</p>
+                    <p class="text-xs text-slate-500">{{ vm.formatDuration(item.song.duration_seconds) }}</p>
+                  </div>
+                  <input
+                    type="text"
+                    [name]="'key' + $index"
+                    class="w-14 shrink-0 rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-center text-xs text-white transition-all duration-200 focus:border-ruby-500/60 focus:outline-none"
+                    [ngModel]="item.performedKey"
+                    (ngModelChange)="vm.setPerformedKey($index, $event)"
+                    title="Tom executado"
+                  />
+                  <div class="flex shrink-0 flex-col">
+                    <button type="button" class="p-0.5 text-slate-500 transition-colors hover:text-white" (click)="vm.moveInBuilder($index, -1)">
+                      <app-icon name="arrow-up" cssClass="w-3.5 h-3.5" />
+                    </button>
+                    <button type="button" class="p-0.5 text-slate-500 transition-colors hover:text-white" (click)="vm.moveInBuilder($index, 1)">
+                      <app-icon name="arrow-down" cssClass="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <button type="button" class="shrink-0 p-1 text-slate-500 transition-colors hover:text-ruby-300" (click)="vm.removeFromBuilder($index)">
+                    <app-icon name="close" cssClass="w-4 h-4" />
+                  </button>
+                </div>
+              } @empty {
+                <p class="py-8 text-center text-sm text-slate-500">Adicione músicas da lista ao lado.</p>
+              }
+            </div>
+            <button
+              type="button"
+              class="mt-4 w-full rounded-xl bg-gradient-to-r from-ruby-700 to-ruby-500 px-6 py-3 font-semibold text-white transition-all duration-200 hover:from-ruby-600 hover:to-ruby-400 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+              [disabled]="!vm.builderName() || vm.builderItems().length === 0"
+              (click)="vm.submitBuilder()"
+            >
+              Salvar repertório
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (vm.isLoading()) {
+    <div class="rounded-2xl border border-white/10 bg-white/5 p-10 text-center text-slate-400">Carregando…</div>
+  } @else if (vm.activeTab() === 'repertoires') {
+    @if (vm.repertoires().length === 0) {
+      <div class="rounded-2xl border border-white/10 bg-white/5 p-10 text-center text-slate-500">
+        Nenhum repertório montado. Cadastre músicas e monte o primeiro!
+      </div>
+    } @else {
+      <div class="space-y-3">
+        @for (repertoire of vm.repertoires(); track repertoire.id) {
+          <article class="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl transition-all duration-200 hover:border-white/20">
+            <div class="flex items-center gap-4 p-5">
+              <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-ruby-700/25 text-ruby-400">
+                <app-icon name="music" cssClass="w-5 h-5" />
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="font-medium">{{ repertoire.name }}</p>
+                <p class="text-xs text-slate-400">
+                  {{ repertoire.items.length }} músicas · show de
+                  <span class="font-semibold text-ruby-300">{{ vm.formatDuration(repertoire.total_seconds) }}</span>
+                  @if (repertoire.date) { · {{ repertoire.date | date: 'dd/MM/yyyy' }} }
+                </p>
+              </div>
+              <div class="flex shrink-0 items-center gap-1">
+                <button
+                  type="button"
+                  class="flex items-center gap-1.5 rounded-xl bg-ruby-700 px-3.5 py-2 text-xs font-semibold text-white transition-all duration-200 hover:bg-ruby-600 active:scale-95 disabled:opacity-60"
+                  [disabled]="vm.downloadingId() === repertoire.id"
+                  (click)="vm.downloadPdf(repertoire)"
+                >
+                  <app-icon name="download" cssClass="w-4 h-4" />
+                  {{ vm.downloadingId() === repertoire.id ? 'Gerando…' : 'PDF' }}
+                </button>
+                <button
+                  type="button"
+                  class="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
+                  (click)="vm.toggleExpand(repertoire.id)"
+                >
+                  <app-icon name="chevron-down" cssClass="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  class="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-ruby-700/25 hover:text-ruby-300"
+                  (click)="vm.deleteRepertoire(repertoire)"
+                  title="Excluir"
+                >
+                  <app-icon name="trash" cssClass="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            @if (vm.expandedRepertoireId() === repertoire.id) {
+              <div class="border-t border-white/8 px-5 py-4">
+                <ol class="space-y-1.5">
+                  @for (item of repertoire.items; track item.id) {
+                    <li class="flex items-center gap-3 rounded-lg bg-white/5 px-3 py-2 text-sm">
+                      <span class="w-5 text-center text-xs font-bold text-ruby-400">{{ item.position }}</span>
+                      <span class="min-w-0 flex-1 truncate">{{ item.song.title }}</span>
+                      <span class="shrink-0 rounded bg-ruby-700/25 px-2 py-0.5 text-xs font-bold text-ruby-300">
+                        {{ item.performed_key || item.song.key }}
+                      </span>
+                      <span class="shrink-0 text-xs text-slate-500">{{ vm.formatDuration(item.song.duration_seconds) }}</span>
+                    </li>
+                  }
+                </ol>
+              </div>
+            }
+          </article>
+        }
+      </div>
+    }
+  } @else {
+    @if (vm.songs().length === 0) {
+      <div class="rounded-2xl border border-white/10 bg-white/5 p-10 text-center text-slate-500">
+        Nenhuma música cadastrada ainda.
+      </div>
+    } @else {
+      <div class="grid gap-3 sm:grid-cols-2">
+        @for (song of vm.songs(); track song.id) {
+          <article class="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-xl transition-all duration-200 hover:border-white/20">
+            <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-ruby-700/25 text-lg font-bold text-ruby-300">
+              {{ song.key }}
+            </div>
+            <div class="min-w-0 flex-1">
+              <p class="truncate font-medium">{{ song.title }}</p>
+              <p class="truncate text-xs text-slate-400">
+                @if (song.original_artist) { {{ song.original_artist }} · }
+                {{ vm.formatDuration(song.duration_seconds) }}
+                @if (song.bpm) { · {{ song.bpm }} bpm }
+              </p>
+            </div>
+            <div class="flex shrink-0 items-center gap-1">
+              <button
+                type="button"
+                class="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
+                (click)="vm.openSongForm(song)"
+                title="Editar"
+              >
+                <app-icon name="edit" cssClass="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                class="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-ruby-700/25 hover:text-ruby-300"
+                (click)="vm.deleteSong(song)"
+                title="Excluir"
+              >
+                <app-icon name="trash" cssClass="w-4 h-4" />
+              </button>
+            </div>
+          </article>
+        }
+      </div>
+    }
+  }
+</div>
