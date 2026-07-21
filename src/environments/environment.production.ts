@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://ruby-backend.bytrixsystems.com',
+  apiUrl: 'https://ruby-backend.bytrixsystems.com/api',
 };
